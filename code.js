@@ -7,8 +7,8 @@ else if (figma.command === 'template') {
 function generateTemplate() {
     const TEMPLATE_SIZE = 2048;
     const GRID_SIZE = TEMPLATE_SIZE / 4;
-    const springGreen = { r: 0, g: 237, b: 100 };
-    const GrayLight3 = { r: 249, g: 251, b: 250 };
+    const SpringGreen = { r: 0, g: 237, b: 100 };
+    const GrayLight2 = { r: 232, g: 237, b: 235 };
     // Create new 2048x2048 frame
     const frame = figma.createFrame();
     frame.resize(TEMPLATE_SIZE, TEMPLATE_SIZE);
@@ -26,7 +26,7 @@ function generateTemplate() {
             y: row * GRID_SIZE,
             parent: frame
         });
-        setColor(circle, GrayLight3);
+        setColor(circle, GrayLight2);
         gridCircles.push(circle);
     }
     const templateGroup = figma.group(gridCircles, frame);
@@ -44,21 +44,23 @@ function generateTemplate() {
         y: GRID_SIZE,
         parent: frame,
     });
-    setColor(circle1, springGreen);
-    setColor(circle2, springGreen);
+    setColor(circle1, SpringGreen);
+    setColor(circle2, SpringGreen);
     figma.currentPage.selection = [circle1, circle2];
     figma.closePlugin('Created Blob template');
 }
 function blobify() {
     // Get selection
     let initialSelection = figma.currentPage.selection;
-    if (!initialSelection) {
+    if (!initialSelection || initialSelection.length === 0) {
         figma.closePlugin('Please make a selection');
+        return;
     }
     // Ensure selection is all Circles or Squaresds
     const areAllCirclesOrSquares = initialSelection.every(shape => isCircle(shape) || isSquare(shape));
     if (!areAllCirclesOrSquares) {
-        figma.closePlugin('Shapes must all be circles or squares');
+        figma.closePlugin('⚠️ Shapes must all be circles or squares');
+        return;
     }
     const selection = [...initialSelection];
     // Ensure all shapes are integer multiples of the smallest shape
@@ -68,7 +70,8 @@ function blobify() {
     const minY = Math.min(...selection.map(({ y }) => y));
     const areAllIntegerMultiples = selection.every(({ width }) => width === minWidth || width === 2 * minWidth || width === 3 * minWidth || width === 4 * minWidth);
     if (!areAllIntegerMultiples) {
-        figma.closePlugin('Shapes must all be integer multiples of each other');
+        figma.closePlugin('⚠️ Shapes must all be integer multiples of each other');
+        return;
     }
     // Convert Circles to Squares
     selection.forEach((shape, index) => {
@@ -93,11 +96,30 @@ function blobify() {
         shape.remove();
         selection.splice(index, 1, rect);
     });
+    // For each rectangle, add a corner radius on each corner with no adjacent rectangles
+    selection.forEach((shape) => {
+        const radius = shape.width / 2;
+        // Check if any other shape overlaps this one
+        const ajcs = getAdjacencies(shape, selection);
+        if (!ajcs.top && !ajcs.left) {
+            shape.topLeftRadius = radius;
+        }
+        if (!ajcs.top && !ajcs.right) {
+            shape.topRightRadius = radius;
+        }
+        if (!ajcs.bottom && !ajcs.left) {
+            shape.bottomLeftRadius = radius;
+        }
+        if (!ajcs.bottom && !ajcs.right) {
+            shape.bottomRightRadius = radius;
+        }
+    });
     // Union all shapes
     const union = figma.union(selection, selection[0].parent);
-    // Add fills & corner radius
-    union.fills = selection[0].fills;
+    // Add corner radius to all other corners
     union.cornerRadius = maxWidth;
+    // Add fills
+    union.fills = selection[0].fills;
     // Flatten the union
     const blob = figma.flatten([union]);
     blob.name = "Blob";
@@ -147,4 +169,50 @@ function setColor(shape, { r, g, b }) {
     fills[0].color.g = g / 255;
     fills[0].color.b = b / 255;
     shape.fills = fills;
+}
+function getAdjacencies(shape, otherShapes) {
+    const adjacencies = {
+        top: false,
+        bottom: false,
+        left: false,
+        right: false
+    };
+    for (let other of otherShapes) {
+        if (other === shape)
+            continue;
+        if (doShapesShareY(shape, other)) {
+            if (isRoughlyEqual(shape.x, other.x + other.width)) {
+                adjacencies.left = true;
+            }
+            if (isRoughlyEqual(shape.x + shape.width, other.x)) {
+                adjacencies.right = true;
+            }
+        }
+        if (doShapesShareX(shape, other)) {
+            if (isRoughlyEqual(shape.y, other.y + other.height)) {
+                adjacencies.top = true;
+            }
+            if (isRoughlyEqual(shape.y + shape.height, other.y)) {
+                adjacencies.bottom = true;
+            }
+        }
+    }
+    return adjacencies;
+    function doShapesShareX(shape1, shape2, includeDiagonals = true) {
+        return isRoughlyEqual(shape1.x, shape2.x) ||
+            isRoughlyEqual(shape1.x + shape1.width, shape2.x + shape2.width) ||
+            (includeDiagonals && isRoughlyEqual(shape1.x + shape1.width, shape2.x)) || // include diagonal adjacencies
+            (includeDiagonals && isRoughlyEqual(shape1.x, shape2.x + shape2.width));
+    }
+    function doShapesShareY(shape1, shape2, includeDiagonals = true) {
+        return isRoughlyEqual(shape1.y, shape2.y) ||
+            isRoughlyEqual(shape1.y + shape1.height, shape2.y + shape2.height) ||
+            (includeDiagonals && isRoughlyEqual(shape1.y + shape1.height, shape2.y)) || // include diagonal adjacencies
+            (includeDiagonals && isRoughlyEqual(shape1.y, shape2.y + shape2.height));
+    }
+    function isRoughlyEqual(a, b, tolerance = 2) {
+        return (a == b) ||
+            (a > b && a <= b + tolerance) ||
+            (a < b && a + tolerance >= b);
+    }
 }
