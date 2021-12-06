@@ -1,0 +1,1 @@
+{"version":3,"sources":["generateTemplate.ts"],"names":[],"mappings":"AAAA,MAAM,UAAU,gBAAgB;IAC9B,OAAO,CAAC,GAAG,CAAC,qBAAqB,CAAC,CAAC;AACrC,CAAC","file":"../generateTemplate.js","sourcesContent":["export function generateTemplate() {\n  console.log(\"Generating template\");\n}"]}

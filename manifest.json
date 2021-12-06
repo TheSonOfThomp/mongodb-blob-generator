@@ -1,0 +1,19 @@
+{
+  "name": "MongoDB Blobs",
+  "id": "1030519107465565850",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": [
+    "figma"
+  ],
+  "menu": [
+    {
+      "name": "Generate template",
+      "command": "template"
+    },
+    {
+      "name": "Blobify",
+      "command": "blobify"
+    }
+  ]
+}

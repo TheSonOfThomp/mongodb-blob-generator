@@ -1,0 +1,14 @@
+{
+  "name": "mongodb-blobs",
+  "version": "1.0.0",
+  "description": "Create MongoDB Blobs",
+  "main": "code.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "author": "",
+  "license": "",
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.37.0"
+  }
+}
