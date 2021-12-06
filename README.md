@@ -1,4 +1,4 @@
-[!Blobs logo](cover.png)
+![Blobs logo](cover.png)
 
 Below are the steps to get your plugin running. You can also find instructions at:
 
