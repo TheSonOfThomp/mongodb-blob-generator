@@ -1,3 +1,6 @@
+# MongoDB Figma Blob Generator
+A Figma plugin for generating MongoDB branded blobs
+
 ![Blobs logo](cover.png)
 
 Below are the steps to get your plugin running. You can also find instructions at:
